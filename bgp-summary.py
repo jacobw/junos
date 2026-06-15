@@ -100,7 +100,7 @@ RouteSummaryTable = classes['RouteSummaryTable']
 BgpSummaryTable = classes['BgpSummaryTable']
 
 parser = argparse.ArgumentParser(description="show bgp summary information with details")
-parser.add_argument("--instance", help="Instance")
+parser.add_argument("--instance", help="Instance prefix")
 parser.add_argument("--host", help="Hostname or IP address of the device")
 args = parser.parse_args()
 
@@ -126,7 +126,7 @@ def main():
                           key=lambda x: (x != 'master', x))
 
         for instance in instances:
-            if args.instance and instance != args.instance:
+            if args.instance and not instance.startswith(args.instance):
                 continue
             
             route_table_name = f"{instance}.inet.0" if instance != "master" else "inet.0"
