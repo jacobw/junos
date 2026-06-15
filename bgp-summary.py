@@ -136,7 +136,7 @@ def main():
 
             for neighbor in bgp_neighbour:
                 if neighbor.instance == instance:
-                    routes = (f"{neighbor.received_prefix}/{neighbor.active_prefix}/{neighbor.advertised_prefix}" if neighbor.state == "Established" else "")
+                    routes = (f"{neighbor.received_prefix}/{neighbor.accepted_prefix}/{neighbor.advertised_prefix}" if neighbor.state == "Established" else "")
                     print(format_peer_row(neighbor, bgp_summary, routes))
 
 if __name__ == "__main__":
