@@ -86,11 +86,20 @@ BgpNeighborView:
     type: peer-type
     state: peer-state
     instance: peer-cfg-rti
-    active_prefix: bgp-rib/active-prefix-count
-    received_prefix: bgp-rib/received-prefix-count
-    accepted_prefix: bgp-rib/accepted-prefix-count
-    suppressed_prefix: bgp-rib/suppressed-prefix-count
-    advertised_prefix: bgp-rib/advertised-prefix-count
+    ribs: BgpRibTable
+
+BgpRibTable:
+  item: bgp-rib
+  key: name
+  view: BgpRibView
+
+BgpRibView:
+  fields:
+    active_prefix: active-prefix-count
+    received_prefix: received-prefix-count
+    accepted_prefix: accepted-prefix-count
+    suppressed_prefix: suppressed-prefix-count
+    advertised_prefix: advertised-prefix-count
 """
 
 loader = FactoryLoader()
@@ -98,6 +107,7 @@ classes = loader.load(yaml.safe_load(bgp_definition))
 BgpNeighborTable = classes['BgpNeighborTable']
 RouteSummaryTable = classes['RouteSummaryTable']
 BgpSummaryTable = classes['BgpSummaryTable']
+BgpRibTable = classes['BgpRibTable']
 
 parser = argparse.ArgumentParser(description="show bgp summary information with details")
 parser.add_argument("--instance", help="Instance prefix")
@@ -128,16 +138,21 @@ def main():
         for instance in instances:
             if args.instance and not instance.startswith(args.instance):
                 continue
-            
+
             route_table_name = f"{instance}.inet.0" if instance != "master" else "inet.0"
             instance_summary = route_summary[route_table_name]
             active_hidden = f"[{instance_summary.active} active, {instance_summary.hidden} hidden]" if instance_summary else ""
             print(f"{newline}Instance: {instance} {active_hidden}")
 
             for neighbor in bgp_neighbour:
-                if neighbor.instance == instance:
-                    routes = (f"{neighbor.received_prefix}/{neighbor.accepted_prefix}/{neighbor.advertised_prefix}" if neighbor.state == "Established" else "")
-                    print(format_peer_row(neighbor, bgp_summary, routes))
+                if neighbor.instance != instance:
+                    continue
+                routes = ""
+                if neighbor.state == "Established":
+                    rib = neighbor.ribs[route_table_name]
+                    if rib is not None:
+                        routes = f"{rib.received_prefix}/{rib.accepted_prefix}/{rib.advertised_prefix}"
+                print(format_peer_row(neighbor, bgp_summary, routes))
 
 if __name__ == "__main__":
     main()
