@@ -77,13 +77,10 @@ BgpNeighborTable:
 
 BgpNeighborView:
   fields:
-    peer_address: peer-address
+    peer_address: { peer-address: 'Search=^([^+]+)' }
     peer_as: peer-as
-    local_address: local-address
-    local_as: local-as
     description: description
     group: peer-group
-    type: peer-type
     state: peer-state
     instance: peer-cfg-rti
     ribs: BgpRibTable
@@ -95,10 +92,8 @@ BgpRibTable:
 
 BgpRibView:
   fields:
-    active_prefix: active-prefix-count
     received_prefix: received-prefix-count
     accepted_prefix: accepted-prefix-count
-    suppressed_prefix: suppressed-prefix-count
     advertised_prefix: advertised-prefix-count
 """
 
@@ -116,9 +111,8 @@ args = parser.parse_args()
 
 def format_peer_row(neighbor, bgp_summary, routes):
     """Format a BGP neighbor as a table row."""
-    peer_address = neighbor.peer_address.split('+')[0]
-    elapsed_time = bgp_summary[peer_address].elapsed_time if peer_address in bgp_summary else "N/A"
-    return f"{peer_address:<16} {neighbor.group:<10} {neighbor.peer_as:<7} {elapsed_time:<14} {neighbor.state:<6.6} {routes:<17} {neighbor.description}"
+    elapsed_time = bgp_summary[neighbor.peer_address].elapsed_time if neighbor.peer_address in bgp_summary else "N/A"
+    return f"{neighbor.peer_address:<16} {neighbor.group:<10} {neighbor.peer_as:<7} {elapsed_time:<14} {neighbor.state:<6.6} {routes:<17} {neighbor.description or ''}"
 
 def main():
     with Device(host=args.host) as dev:
